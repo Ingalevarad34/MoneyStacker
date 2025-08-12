@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "259959867953",
+    "project_id": "moneystacker-e77e9",
+    "storage_bucket": "moneystacker-e77e9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:259959867953:android:e104ac9536e4a6dcaaa310",
+        "android_client_info": {
+          "package_name": "com.example.moneystacker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhCDOETdC33K1nnUDcywFjW0PTFYZo-Us"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
