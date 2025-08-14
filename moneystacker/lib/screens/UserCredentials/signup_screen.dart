@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:moneystacker/screens/signupSuccessPage.dart';
+import 'package:moneystacker/screens/UserCredentials/signupSuccessPage.dart';
 import 'package:moneystacker/services/flutter_auth_service.dart';
 import 'package:get/get.dart';
 

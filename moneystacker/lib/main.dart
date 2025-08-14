@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
-import 'package:moneystacker/screens/login_screen.dart';
+import 'package:moneystacker/screens/UserCredentials/login_screen.dart';
+import 'package:moneystacker/screens/UserCredentials/wrapper.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -24,7 +25,7 @@ class _MainAppState extends State<MainApp> {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const LoginScreen(),
+      home: const Wrapper(),
     );
   }
 }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:moneystacker/screens/signup_screen.dart';
+import 'package:moneystacker/screens/UserCredentials/signup_screen.dart';
+import 'package:moneystacker/screens/homePage.dart';
 import 'package:moneystacker/services/flutter_auth_service.dart';
 import 'package:get/get.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
 
@@ -32,6 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Login successful")),
         );
+        Get.to(() => HomePage());
         // Navigate to home/dashboard
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -101,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 GestureDetector(
                   onTap: () {
                     // Navigate to sign up page
-                     Get.to(()=>SignUpScreen());
+                    Get.to(() => SignUpScreen());
                   },
                   child: const Text(
                     "Create an account?",
