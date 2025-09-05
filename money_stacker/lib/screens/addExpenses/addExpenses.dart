@@ -22,10 +22,12 @@ class _AddExpensePageState extends State<AddExpensePage> {
 
   final List<String> categories = [
     "Food",
+    "Medicine",
     "Transport",
     "Shopping",
     "Bills",
     "Entertainment",
+    "Shared",
     "Other"
   ];
 
@@ -183,7 +185,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                     const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(
                   labelText: "How much?",
-                  prefixText: "\$ ",
+                  prefixText: "\₹ ",
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -225,7 +227,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                 title: const Text("Date & Time"),
                 subtitle: Text(
                     DateFormat("dd MMM yyyy, hh:mm a").format(selectedDate)),
-                trailing: const Icon(Icons.calendar_today, color: Colors.blue),
+                trailing: const Icon(Icons.calendar_today, color: Colors.black),
                 onTap: _pickDateTime,
               ),
               const SizedBox(height: 16),
@@ -240,7 +242,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                 subtitle: attachment != null
                     ? Text(attachment!.path.split('/').last)
                     : const Text("No file selected"),
-                trailing: const Icon(Icons.attach_file, color: Colors.blue),
+                trailing: const Icon(Icons.attach_file, color: Colors.black),
                 onTap: _pickAttachment,
               ),
               if (attachment != null) ...[
@@ -268,7 +270,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                   ),
                   child: const Text(
                     "Continue",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,color: Colors.white),
                   ),
                 ),
               ),
