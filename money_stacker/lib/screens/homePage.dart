@@ -4,8 +4,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/get_core.dart';
 import 'package:intl/intl.dart';
 import 'package:money_stacker/screens/addExpenses/addExpenses.dart';
+import 'package:money_stacker/screens/expensesDetails/expensesDetail.dart';
 
 enum MonthKeying { zeroBased, oneBased }
 
@@ -560,44 +563,87 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 10),
 
             Expanded(
-              child: ListView.builder(
-                itemCount: transactions.length,
-                itemBuilder: (context, index) {
-                  final tx = transactions[index];
-                  print(tx);
-                  return Card(
-                    color: Colors.white,
-                    margin: const EdgeInsets.symmetric(vertical: 6),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: Colors.blueAccent.withOpacity(0.2),
-                        child: const Icon(
-                          Icons.shopping_cart,
-                          color: Colors.blueAccent,
-                        ),
-                      ),
-                      title: Text(
-                        tx['title'] ?? '',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text(tx['subtitle'] ?? ''),
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            "-\₹${(tx['amount'] as double).toStringAsFixed(2)}",
-                            style: const TextStyle(
-                              color: Colors.red,
-                              fontWeight: FontWeight.bold,
+              child: StreamBuilder(
+                stream: FirebaseDatabase.instance
+                    .ref("expenses/2025/9/items")
+                    .onValue,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return Center(child: Text("Error: ${snapshot.error}"));
+                  }
+                  if (!snapshot.hasData ||
+                      snapshot.data!.snapshot.value == null) {
+                    return const Center(child: Text("No transactions found"));
+                  }
+
+                  // Convert snapshot to list
+                  final data = Map<String, dynamic>.from(
+                    snapshot.data!.snapshot.value as Map,
+                  );
+                  final transactions = data.entries.map((entry) {
+                    final tx = Map<String, dynamic>.from(entry.value);
+                    tx['id'] = entry.key; // keep Firebase auto-id
+                    return tx;
+                  }).toList();
+
+                  return ListView.builder(
+                    itemCount: transactions.length,
+                    itemBuilder: (context, index) {
+                      final tx = transactions[index];
+                      // print(tx);
+                      return InkWell(
+                        onTap: () =>
+                            Get.to(() => ExpensesDetailScreen(data: tx)),
+                        child: Card(
+                          color: Colors.white,
+                          margin: const EdgeInsets.symmetric(
+                            vertical: 6,
+                            horizontal: 10,
+                          ),
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: Colors.blueAccent.withOpacity(
+                                0.2,
+                              ),
+                              child: const Icon(
+                                Icons.shopping_cart,
+                                color: Colors.blueAccent,
+                              ),
+                            ),
+                            title: Text(
+                              tx['title'] ?? '',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(tx['subtitle'] ?? ''),
+                            trailing: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "- ₹${(tx['amount'] ?? 0).toString()}",
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  tx['time'] ?? '',
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              ],
                             ),
                           ),
-                          Text(
-                            tx['time'] ?? '',
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ),
+                        ),
+                      );
+                    },
                   );
                 },
               ),
@@ -612,7 +658,7 @@ class _HomePageState extends State<HomePage> {
         onPressed: () async {
           final result = await Navigator.push<bool?>(
             context,
-            MaterialPageRoute(builder: (_) => const AddExpensePage()),
+            MaterialPageRoute(builder: (_) => AddExpensePage()),
           );
           if (result == true) {
             // refresh (stream already updates, but this ensures UI consistency)
@@ -624,7 +670,7 @@ class _HomePageState extends State<HomePage> {
             }
           }
         },
-        child: const Icon(Icons.add,color: Colors.white,),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
