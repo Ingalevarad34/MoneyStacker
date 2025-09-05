@@ -36,7 +36,7 @@ class _HomePageState extends State<HomePage> {
     "September",
     "October",
     "November",
-    "December"
+    "December",
   ];
 
   int selectedMonthIndex = DateTime.now().month - 1;
@@ -71,7 +71,7 @@ class _HomePageState extends State<HomePage> {
 
   Map<String, dynamic> _normalizeYearToOneBased(dynamic rawYear) {
     final Map<String, dynamic> out = {
-      for (int m = 1; m <= 12; m++) m.toString(): {}
+      for (int m = 1; m <= 12; m++) m.toString(): {},
     };
 
     if (rawYear is List) {
@@ -157,15 +157,22 @@ class _HomePageState extends State<HomePage> {
       List<Map<String, dynamic>> tempList = [];
       List<double> tempMonthlyTotals = List.filled(12, 0.0);
 
-      int daysInSelectedMonth =
-          DateTime(currentYear, (selectedMonthIndex + 1) + 1, 0).day;
+      int daysInSelectedMonth = DateTime(
+        currentYear,
+        (selectedMonthIndex + 1) + 1,
+        0,
+      ).day;
       int todayDay = DateTime.now().day;
       if (todayDay > daysInSelectedMonth) todayDay = daysInSelectedMonth;
-      final DateTime anchor =
-          DateTime(currentYear, selectedMonthIndex + 1, todayDay);
+      final DateTime anchor = DateTime(
+        currentYear,
+        selectedMonthIndex + 1,
+        todayDay,
+      );
 
-      final DateTime startOfWeek =
-          anchor.subtract(Duration(days: anchor.weekday - 1));
+      final DateTime startOfWeek = anchor.subtract(
+        Duration(days: anchor.weekday - 1),
+      );
       final DateTime endOfWeek = startOfWeek.add(const Duration(days: 6));
 
       bool inRange(DateTime d, DateTime start, DateTime end) {
@@ -199,8 +206,9 @@ class _HomePageState extends State<HomePage> {
           double computed = 0.0;
           for (final entry in itemsMap.entries) {
             final dynamic v = entry.value;
-            final Map<dynamic, dynamic> item =
-                (v is Map) ? v : (v is List ? _toMap(v) : {});
+            final Map<dynamic, dynamic> item = (v is Map)
+                ? v
+                : (v is List ? _toMap(v) : {});
             if (item.isEmpty) continue;
             computed += _parseAmount(item['amount']);
           }
@@ -223,15 +231,18 @@ class _HomePageState extends State<HomePage> {
 
             bool matches = false;
             if (selectedTab == "Today") {
-              matches = (date.year == currentYear) &&
+              matches =
+                  (date.year == currentYear) &&
                   (date.month == selectedMonthIndex + 1) &&
                   (date.day == anchor.day);
             } else if (selectedTab == "Week") {
-              matches = (date.year == currentYear) &&
+              matches =
+                  (date.year == currentYear) &&
                   (date.month == selectedMonthIndex + 1) &&
                   inRange(date, startOfWeek, endOfWeek);
             } else if (selectedTab == "Month") {
-              matches = (date.year == currentYear) &&
+              matches =
+                  (date.year == currentYear) &&
                   (date.month == selectedMonthIndex + 1);
             } else if (selectedTab == "Year") {
               matches = (date.year == currentYear);
@@ -243,7 +254,8 @@ class _HomePageState extends State<HomePage> {
                 "title": item['title'] ?? '',
                 "subtitle": item['subtitle'] ?? '',
                 "amount": amount,
-                "time": item['time'] ??
+                "time":
+                    item['time'] ??
                     (date != null ? DateFormat.Hm().format(date) : ''),
               });
             }
@@ -261,14 +273,19 @@ class _HomePageState extends State<HomePage> {
 
   // Legacy: kept for compatibility — not used by FAB anymore.
   Future<void> addExpenseProgrammatic(
-      String title, String subtitle, double amount) async {
+    String title,
+    String subtitle,
+    double amount,
+  ) async {
     final DateTime now = DateTime.now();
     final int monthKeyForWrite = _yearKeying == MonthKeying.zeroBased
-        ? now.month - 1 // 0..11
+        ? now.month -
+              1 // 0..11
         : now.month; // 1..12
 
-    final DatabaseReference monthRef =
-        dbRef.child('$currentYear/$monthKeyForWrite');
+    final DatabaseReference monthRef = dbRef.child(
+      '$currentYear/$monthKeyForWrite',
+    );
     final DatabaseReference pushRef = monthRef.child('items').push();
     await pushRef.set({
       "title": title,
@@ -302,8 +319,10 @@ class _HomePageState extends State<HomePage> {
       months.length * (barWidth + approxGroupGap),
     );
 
-    final double maxMonthly =
-        monthlyTotals.fold<double>(0.0, (p, e) => e > p ? e : p);
+    final double maxMonthly = monthlyTotals.fold<double>(
+      0.0,
+      (p, e) => e > p ? e : p,
+    );
     final double maxY = (maxMonthly <= 0 ? 100.0 : maxMonthly * 1.2);
     final int currentMonthIndex = DateTime.now().month - 1;
 
@@ -324,14 +343,17 @@ class _HomePageState extends State<HomePage> {
               value: selectedMonthIndex,
               icon: const Icon(Icons.arrow_drop_down, color: Colors.blueAccent),
               style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.black87,
-                  fontWeight: FontWeight.bold),
+                fontSize: 16,
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
+              ),
               dropdownColor: Colors.white,
               items: List.generate(
                 months.length,
                 (index) => DropdownMenuItem<int>(
-                    value: index, child: Text(months[index])),
+                  value: index,
+                  child: Text(months[index]),
+                ),
               ),
               onChanged: (val) {
                 if (val != null) {
@@ -345,77 +367,67 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add, color: Colors.blueAccent),
-            onPressed: () async {
-              // Another entry point to add expense
-              final result = await Navigator.push<bool?>(
-                context,
-                MaterialPageRoute(builder: (_) => const AddExpensePage()),
-              );
-              if (result == true) {
-                // Fetch fresh data (not strictly necessary because stream updates, but safe)
-                fetchExpenses();
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Expense added')),
-                  );
-                }
-              }
-            },
-          )
-        ],
+        // actions: [
+        //   IconButton(
+        //     icon: const Icon(Icons.add, color: Colors.blueAccent),
+        //     onPressed: () async {
+        //       // Another entry point to add expense
+        //       final result = await Navigator.push<bool?>(
+        //         context,
+        //         MaterialPageRoute(builder: (_) => const AddExpensePage()),
+        //       );
+        //       if (result == true) {
+        //         // Fetch fresh data (not strictly necessary because stream updates, but safe)
+        //         fetchExpenses();
+        //         if (mounted) {
+        //           ScaffoldMessenger.of(context).showSnackBar(
+        //             const SnackBar(content: Text('Expense added')),
+        //           );
+        //         }
+        //       }
+        //     },
+        //   ),
+        // ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Tabs
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: ["Today", "Week", "Month", "Year"].map((tab) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: ChoiceChip(
-                      label: Text(tab),
-                      selected: selectedTab == tab,
-                      onSelected: (val) {
-                        setState(() {
-                          selectedTab = tab;
-                          fetchExpenses();
-                        });
-                      },
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
             // Total card
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                  color: Colors.blueAccent,
-                  borderRadius: BorderRadius.circular(16)),
-              child: Row(children: [
-                const Icon(Icons.account_balance_wallet,
-                    color: Colors.white, size: 40),
-                const SizedBox(width: 16),
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Text("Expenses",
-                      style: TextStyle(color: Colors.white, fontSize: 16)),
-                  Text("\$${totalExpense.toStringAsFixed(2)}",
-                      style: const TextStyle(
+                color: Colors.blueAccent,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.account_balance_wallet,
+                    color: Colors.white,
+                    size: 40,
+                  ),
+                  const SizedBox(width: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Expenses",
+                        style: TextStyle(color: Colors.white, fontSize: 16),
+                      ),
+                      Text(
+                        "\₹${totalExpense.toStringAsFixed(2)}",
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 24,
-                          fontWeight: FontWeight.bold)),
-                ]),
-              ]),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
 
             const SizedBox(height: 20),
@@ -424,7 +436,9 @@ class _HomePageState extends State<HomePage> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                  color: Colors.white, borderRadius: BorderRadius.circular(16)),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
               height: 260,
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -439,10 +453,12 @@ class _HomePageState extends State<HomePage> {
                         touchTooltipData: BarTouchTooltipData(
                           tooltipPadding: const EdgeInsets.all(8),
                           getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                            final label =
-                                months[group.x.toInt()].substring(0, 3);
+                            final label = months[group.x.toInt()].substring(
+                              0,
+                              3,
+                            );
                             return BarTooltipItem(
-                              '$label\n\$${rod.toY.toStringAsFixed(2)}',
+                              '$label\n\₹${rod.toY.toStringAsFixed(2)}',
                               const TextStyle(fontWeight: FontWeight.bold),
                             );
                           },
@@ -450,8 +466,10 @@ class _HomePageState extends State<HomePage> {
                       ),
                       titlesData: FlTitlesData(
                         leftTitles: const AxisTitles(
-                          sideTitles:
-                              SideTitles(showTitles: true, reservedSize: 40),
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 40,
+                          ),
                         ),
                         bottomTitles: AxisTitles(
                           sideTitles: SideTitles(
@@ -472,8 +490,9 @@ class _HomePageState extends State<HomePage> {
                                       fontWeight: isCurrent
                                           ? FontWeight.bold
                                           : FontWeight.normal,
-                                      color:
-                                          isCurrent ? Colors.red : Colors.black,
+                                      color: isCurrent
+                                          ? Colors.red
+                                          : Colors.black,
                                     ),
                                   ),
                                 );
@@ -483,8 +502,10 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                       ),
-                      gridData:
-                          const FlGridData(show: true, horizontalInterval: 50),
+                      gridData: const FlGridData(
+                        show: true,
+                        horizontalInterval: 200,
+                      ),
                       borderData: FlBorderData(show: false),
                       barGroups: List.generate(12, (i) {
                         return BarChartGroupData(
@@ -508,9 +529,34 @@ class _HomePageState extends State<HomePage> {
             ),
 
             const SizedBox(height: 20),
+            // Tabs
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: ["Today", "Week", "Month", "Year"].map((tab) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: ChoiceChip(
+                      color: WidgetStatePropertyAll(Colors.white),
+                      label: Text(tab),
+                      selected: selectedTab == tab,
+                      onSelected: (val) {
+                        setState(() {
+                          selectedTab = tab;
+                          fetchExpenses();
+                        });
+                      },
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: 20),
 
-            const Text("Recent Transactions",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text(
+              "Recent Transactions",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 10),
 
             Expanded(
@@ -518,27 +564,37 @@ class _HomePageState extends State<HomePage> {
                 itemCount: transactions.length,
                 itemBuilder: (context, index) {
                   final tx = transactions[index];
+                  print(tx);
                   return Card(
+                    color: Colors.white,
                     margin: const EdgeInsets.symmetric(vertical: 6),
                     child: ListTile(
                       leading: CircleAvatar(
                         backgroundColor: Colors.blueAccent.withOpacity(0.2),
-                        child: const Icon(Icons.shopping_cart,
-                            color: Colors.blueAccent),
+                        child: const Icon(
+                          Icons.shopping_cart,
+                          color: Colors.blueAccent,
+                        ),
                       ),
-                      title: Text(tx['title'] ?? '',
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                      title: Text(
+                        tx['title'] ?? '',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       subtitle: Text(tx['subtitle'] ?? ''),
                       trailing: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                              "-\$${(tx['amount'] as double).toStringAsFixed(2)}",
-                              style: const TextStyle(
-                                  color: Colors.red,
-                                  fontWeight: FontWeight.bold)),
-                          Text(tx['time'] ?? '',
-                              style: const TextStyle(fontSize: 12)),
+                            "-\₹${(tx['amount'] as double).toStringAsFixed(2)}",
+                            style: const TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            tx['time'] ?? '',
+                            style: const TextStyle(fontSize: 12),
+                          ),
                         ],
                       ),
                     ),
@@ -562,13 +618,13 @@ class _HomePageState extends State<HomePage> {
             // refresh (stream already updates, but this ensures UI consistency)
             fetchExpenses();
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Expense added')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Expense added')));
             }
           }
         },
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add,color: Colors.white,),
       ),
     );
   }
