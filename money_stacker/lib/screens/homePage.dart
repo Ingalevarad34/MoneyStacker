@@ -579,24 +579,65 @@ class _HomePageState extends State<HomePage> {
                     return const Center(child: Text("No transactions found"));
                   }
 
-                  // Convert snapshot to list
-                  final data = Map<String, dynamic>.from(
-                    snapshot.data!.snapshot.value as Map,
-                  );
-                  final transactions = data.entries.map((entry) {
+                  final rawData = snapshot.data!.snapshot.value as Map;
+                  final data = Map<String, dynamic>.from(rawData);
+
+                  List<Map<String, dynamic>> transactions = data.entries.map((
+                    entry,
+                  ) {
                     final tx = Map<String, dynamic>.from(entry.value);
-                    tx['id'] = entry.key; // keep Firebase auto-id
+                    tx['id'] = entry.key;
                     return tx;
                   }).toList();
+
+                  final now = DateTime.now();
+                  transactions = transactions.where((tx) {
+                    if (tx['date'] == null) return false;
+                    final txDate = DateTime.tryParse(tx['date']);
+                    if (txDate == null) return false;
+
+                    switch (selectedTab) {
+                      case "Today":
+                        return txDate.year == now.year &&
+                            txDate.month == now.month &&
+                            txDate.day == now.day;
+
+                      case "Week":
+                        final weekAgo = now.subtract(const Duration(days: 7));
+                        return txDate.isAfter(weekAgo);
+
+                      case "Month":
+                        return txDate.year == now.year &&
+                            txDate.month == now.month;
+
+                      case "Year":
+                        return txDate.year == now.year;
+
+                      default:
+                        return true;
+                    }
+                  }).toList();
+
+                  if (transactions.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        "No transactions for this filter",
+                        style: TextStyle(fontSize: 16, color: Colors.black54),
+                      ),
+                    );
+                  }
 
                   return ListView.builder(
                     itemCount: transactions.length,
                     itemBuilder: (context, index) {
                       final tx = transactions[index];
-                      // print(tx);
+
+                      final amount = (tx['amount'] ?? 0).toString();
+
                       return InkWell(
-                        onTap: () =>
-                            Get.to(() => ExpensesDetailScreen(data: tx)),
+                        onTap: () {
+                          Get.to(() => ExpensesDetailScreen(data: tx));
+                        },
                         child: Card(
                           color: Colors.white,
                           margin: const EdgeInsets.symmetric(
@@ -621,22 +662,34 @@ class _HomePageState extends State<HomePage> {
                               tx['title'] ?? '',
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
+                                fontSize: 16,
                               ),
                             ),
-                            subtitle: Text(tx['subtitle'] ?? ''),
+                            subtitle: Text(
+                              tx['subtitle'] ?? '',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.black54,
+                              ),
+                            ),
                             trailing: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  "- ₹${(tx['amount'] ?? 0).toString()}",
+                                  "- ₹$amount",
                                   style: const TextStyle(
                                     color: Colors.red,
                                     fontWeight: FontWeight.bold,
+                                    fontSize: 15,
                                   ),
                                 ),
+                                const SizedBox(height: 4),
                                 Text(
                                   tx['time'] ?? '',
-                                  style: const TextStyle(fontSize: 12),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black54,
+                                  ),
                                 ),
                               ],
                             ),
@@ -652,7 +705,6 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
 
-      // FAB now opens AddExpensePage (no hardcoded values)
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.blueAccent,
         onPressed: () async {
@@ -661,7 +713,6 @@ class _HomePageState extends State<HomePage> {
             MaterialPageRoute(builder: (_) => AddExpensePage()),
           );
           if (result == true) {
-            // refresh (stream already updates, but this ensures UI consistency)
             fetchExpenses();
             if (mounted) {
               ScaffoldMessenger.of(
