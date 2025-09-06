@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:money_stacker/features/home/views/homeView.dart';
 import 'package:money_stacker/screens/UserCredentials/login_screen.dart';
 import 'package:money_stacker/screens/homePage.dart';
 
@@ -29,7 +30,7 @@ class _WrapperState extends State<Wrapper> {
             if (snapshot.data == null) {
               return LoginScreen();
             } else {
-              return  HomePage();
+              return  HomeView();
             }
           }
         },

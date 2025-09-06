@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
+import 'package:money_stacker/features/home/bindings/homeBindings.dart';
+import 'package:money_stacker/features/home/views/homeView.dart';
 import 'package:money_stacker/screens/UserCredentials/signup_screen.dart';
 import 'package:money_stacker/screens/homePage.dart';
 import 'package:money_stacker/services/flutter_auth_service.dart';
@@ -35,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Login successful")),
         );
-        Get.to(() => HomePage());
+        Get.to(() => HomeView(),binding: HomeBinding());
         // Navigate to home/dashboard
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

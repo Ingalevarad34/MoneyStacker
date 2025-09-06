@@ -1,283 +1,336 @@
-// add_expense_page.dart
-import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
-import 'package:firebase_database/firebase_database.dart';
+// // add_expense_page.dart
+// import 'dart:io';
+// import 'package:flutter/material.dart';
+// import 'package:image_picker/image_picker.dart';
+// import 'package:intl/intl.dart';
+// import 'package:firebase_database/firebase_database.dart';
+// import 'package:firebase_auth/firebase_auth.dart';
 
-class AddExpensePage extends StatefulWidget {
-  const AddExpensePage({super.key});
+// enum MonthKeying { zeroBased, oneBased }
 
-  @override
-  State<AddExpensePage> createState() => _AddExpensePageState();
-}
+// class AddExpensePage extends StatefulWidget {
+//   const AddExpensePage({super.key});
 
-class _AddExpensePageState extends State<AddExpensePage> {
-  final TextEditingController _amountController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
+//   @override
+//   State<AddExpensePage> createState() => _AddExpensePageState();
+// }
 
-  String? selectedCategory;
-  DateTime selectedDate = DateTime.now();
-  File? attachment;
+// class _AddExpensePageState extends State<AddExpensePage> {
+//   final TextEditingController _amountController = TextEditingController();
+//   final TextEditingController _descriptionController = TextEditingController();
 
-  final List<String> categories = [
-    "Food",
-    "Medicine",
-    "Transport",
-    "Shopping",
-    "Bills",
-    "Entertainment",
-    "Shared",
-    "Other"
-  ];
+//   String? selectedCategory;
+//   DateTime selectedDate = DateTime.now();
+//   File? attachment;
 
-  final DatabaseReference dbRef = FirebaseDatabase.instance.ref("expenses");
-  final int currentYear = DateTime.now().year;
+//   final List<String> categories = [
+//     "Food",
+//     "Medicine",
+//     "Transport",
+//     "Shopping",
+//     "Bills",
+//     "Entertainment",
+//     "Shared",
+//     "Other",
+//   ];
 
-  @override
-  void dispose() {
-    _amountController.dispose();
-    _descriptionController.dispose();
-    super.dispose();
-  }
+//   late DatabaseReference dbRef;
+//   late String _userId;
+//   final int currentYear = DateTime.now().year;
 
-  Future<void> _pickDateTime() async {
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: selectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
-    );
-    if (pickedDate == null) return;
+//   MonthKeying _yearKeying = MonthKeying.oneBased;
 
-    final TimeOfDay? pickedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(selectedDate),
-    );
-    if (pickedTime == null) return;
+//   @override
+//   void initState() {
+//     super.initState();
+//     final user = FirebaseAuth.instance.currentUser;
+//     _userId = user?.uid ?? 'guest';
+//     dbRef = FirebaseDatabase.instance.ref("expenses").child(_userId);
 
-    setState(() {
-      selectedDate = DateTime(
-        pickedDate.year,
-        pickedDate.month,
-        pickedDate.day,
-        pickedTime.hour,
-        pickedTime.minute,
-      );
-    });
-  }
+//     // Detect existing year's keying once (if data exists).
+//     _detectYearKeying();
+//   }
 
-  Future<void> _pickAttachment() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? file = await showModalBottomSheet<XFile?>(
-      context: context,
-      builder: (ctx) {
-        return SafeArea(
-          child: Wrap(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Choose from gallery'),
-                onTap: () async {
-                  final f = await picker.pickImage(source: ImageSource.gallery);
-                  Navigator.of(ctx).pop(f);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('Take a photo'),
-                onTap: () async {
-                  final f = await picker.pickImage(source: ImageSource.camera);
-                  Navigator.of(ctx).pop(f);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.close),
-                title: const Text('Cancel'),
-                onTap: () => Navigator.of(ctx).pop(null),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+//   @override
+//   void dispose() {
+//     _amountController.dispose();
+//     _descriptionController.dispose();
+//     super.dispose();
+//   }
 
-    if (file != null) {
-      setState(() {
-        attachment = File(file.path);
-      });
-    }
-  }
+//   Future<void> _detectYearKeying() async {
+//     try {
+//       final snap = await dbRef.child(currentYear.toString()).get();
+//       final raw = snap.value;
+//       _yearKeying = _detectKeying(raw);
+//     } catch (_) {
+//       // keep default oneBased if anything goes wrong
+//       _yearKeying = MonthKeying.oneBased;
+//     }
+//   }
 
-  Future<void> _submit() async {
-    final amountRaw = _amountController.text.trim();
-    final double? amount = double.tryParse(amountRaw);
+//   MonthKeying _detectKeying(dynamic rawYear) {
+//     if (rawYear is List) return MonthKeying.zeroBased;
+//     if (rawYear is Map) {
+//       final keys = rawYear.keys.map((k) => k.toString()).toList();
+//       if (keys.contains('0')) return MonthKeying.zeroBased;
+//       if (keys.any((k) => k == '1' || k == '12')) return MonthKeying.oneBased;
+//     }
+//     return MonthKeying.oneBased;
+//   }
 
-    if (amount == null || amount <= 0.0 || selectedCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text("Please enter a valid amount and select a category")),
-      );
-      return;
-    }
+//   Future<void> _pickDateTime() async {
+//     final DateTime? pickedDate = await showDatePicker(
+//       context: context,
+//       initialDate: selectedDate,
+//       firstDate: DateTime(2020),
+//       lastDate: DateTime(2100),
+//     );
+//     if (pickedDate == null) return;
 
-    final int month = selectedDate.month; // 1..12
+//     final TimeOfDay? pickedTime = await showTimePicker(
+//       context: context,
+//       initialTime: TimeOfDay.fromDateTime(selectedDate),
+//     );
+//     if (pickedTime == null) return;
 
-    try {
-      final DatabaseReference monthRef = dbRef.child('$currentYear/$month');
-      final DatabaseReference pushRef = monthRef.child('items').push();
+//     setState(() {
+//       selectedDate = DateTime(
+//         pickedDate.year,
+//         pickedDate.month,
+//         pickedDate.day,
+//         pickedTime.hour,
+//         pickedTime.minute,
+//       );
+//     });
+//   }
 
-      final expenseData = {
-        "title": selectedCategory,
-        "subtitle": _descriptionController.text.trim(),
-        "amount": amount,
-        "time": DateFormat.Hm().format(selectedDate),
-        "date": selectedDate.toIso8601String(),
-        // NOTE: we store a local path here; consider uploading attachments to Firebase Storage and saving URL
-        "attachment": attachment?.path,
-      };
+//   Future<void> _pickAttachment() async {
+//     final ImagePicker picker = ImagePicker();
+//     final XFile? file = await showModalBottomSheet<XFile?>(
+//       context: context,
+//       builder: (ctx) {
+//         return SafeArea(
+//           child: Wrap(
+//             children: [
+//               ListTile(
+//                 leading: const Icon(Icons.photo_library),
+//                 title: const Text('Choose from gallery'),
+//                 onTap: () async {
+//                   final f = await picker.pickImage(source: ImageSource.gallery);
+//                   Navigator.of(ctx).pop(f);
+//                 },
+//               ),
+//               ListTile(
+//                 leading: const Icon(Icons.camera_alt),
+//                 title: const Text('Take a photo'),
+//                 onTap: () async {
+//                   final f = await picker.pickImage(source: ImageSource.camera);
+//                   Navigator.of(ctx).pop(f);
+//                 },
+//               ),
+//               ListTile(
+//                 leading: const Icon(Icons.close),
+//                 title: const Text('Cancel'),
+//                 onTap: () => Navigator.of(ctx).pop(null),
+//               ),
+//             ],
+//           ),
+//         );
+//       },
+//     );
 
-      // Save item
-      await pushRef.set(expenseData);
+//     if (file != null) {
+//       setState(() {
+//         attachment = File(file.path);
+//       });
+//     }
+//   }
 
-      // Update monthly total safely using a transaction
-      await monthRef.child('total').runTransaction((Object? currentData) {
-        // currentData is Object? and may be null
-        double currentTotal = 0.0;
+//   Future<void> _submit() async {
+//     final amountRaw = _amountController.text.trim();
+//     final double? amount = double.tryParse(amountRaw);
 
-        if (currentData != null) {
-          currentTotal = (currentData as num).toDouble();
-        }
+//     if (amount == null || amount <= 0.0 || selectedCategory == null) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         const SnackBar(
+//           content: Text("Please enter a valid amount and select a category"),
+//         ),
+//       );
+//       return;
+//     }
 
-        double updatedTotal = currentTotal + amount;
+//     final int month = selectedDate.month; // 1..12
 
-        return Transaction.success(updatedTotal);
-      });
+//     try {
+//       // Ensure keying is known (if detection in initState didn't complete)
+//       if (_yearKeying == null) {
+//         await _detectYearKeying();
+//       }
 
-      // Return success to caller (HomePage)
-      if (mounted) Navigator.pop(context, true);
-    } catch (e) {
-      // Save failed
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to save expense: $e")),
-      );
-    }
-  }
+//       final int monthKeyForWrite = _yearKeying == MonthKeying.zeroBased
+//           ? month - 1
+//           : month;
+//       final DatabaseReference monthRef = dbRef.child(
+//         '$currentYear/$monthKeyForWrite',
+//       );
+//       final DatabaseReference pushRef = monthRef.child('items').push();
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Add Expense"),
-        backgroundColor: Colors.blueAccent,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.vertical,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Amount
-              TextField(
-                controller: _amountController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: "How much?",
-                  prefixText: "\₹ ",
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
+//       final expenseData = {
+//         "title": selectedCategory,
+//         "subtitle": _descriptionController.text.trim(),
+//         "amount": amount,
+//         "time": DateFormat.Hm().format(selectedDate),
+//         "date": selectedDate.toIso8601String(),
+//         // NOTE: we store a local path here; consider uploading attachments to Firebase Storage and saving URL
+//         "attachment": attachment?.path,
+//       };
 
-              // Category
-              DropdownButtonFormField<String>(
-                value: selectedCategory,
-                items: categories
-                    .map((cat) => DropdownMenuItem(
-                          value: cat,
-                          child: Text(cat),
-                        ))
-                    .toList(),
-                onChanged: (val) => setState(() => selectedCategory = val),
-                decoration: const InputDecoration(
-                  labelText: "Category",
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
+//       // Save item
+//       await pushRef.set(expenseData);
 
-              // Description
-              TextField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: "Description",
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
+//       // Update monthly total safely using a transaction
+//       await monthRef.child('total').runTransaction((Object? currentData) {
+//         double currentTotal = 0.0;
+//         if (currentData != null) {
+//           currentTotal = (currentData as num).toDouble();
+//         }
+//         double updatedTotal = currentTotal + amount;
+//         return Transaction.success(updatedTotal);
+//       });
 
-              // Date & Time Picker
-              ListTile(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  side: const BorderSide(color: Colors.grey),
-                ),
-                title: const Text("Date & Time"),
-                subtitle: Text(
-                    DateFormat("dd MMM yyyy, hh:mm a").format(selectedDate)),
-                trailing: const Icon(Icons.calendar_today, color: Colors.black),
-                onTap: _pickDateTime,
-              ),
-              const SizedBox(height: 16),
+//       // Return success to caller (HomePage)
+//       if (mounted) Navigator.pop(context, true);
+//     } catch (e) {
+//       // Save failed
+//       ScaffoldMessenger.of(
+//         context,
+//       ).showSnackBar(SnackBar(content: Text("Failed to save expense: $e")));
+//     }
+//   }
 
-              // Attachment
-              ListTile(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  side: const BorderSide(color: Colors.grey),
-                ),
-                title: const Text("Add Attachment"),
-                subtitle: attachment != null
-                    ? Text(attachment!.path.split('/').last)
-                    : const Text("No file selected"),
-                trailing: const Icon(Icons.attach_file, color: Colors.black),
-                onTap: _pickAttachment,
-              ),
-              if (attachment != null) ...[
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child:
-                      Image.file(attachment!, height: 120, fit: BoxFit.cover),
-                ),
-              ],
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(
+//         title: const Text("Add Expense"),
+//         backgroundColor: Colors.blueAccent,
+//       ),
+//       body: Padding(
+//         padding: const EdgeInsets.all(16),
+//         child: SingleChildScrollView(
+//           scrollDirection: Axis.vertical,
+//           child: Column(
+//             crossAxisAlignment: CrossAxisAlignment.start,
+//             children: [
+//               // Amount
+//               TextField(
+//                 controller: _amountController,
+//                 keyboardType: const TextInputType.numberWithOptions(
+//                   decimal: true,
+//                 ),
+//                 decoration: const InputDecoration(
+//                   labelText: "How much?",
+//                   prefixText: "\₹ ",
+//                   border: OutlineInputBorder(),
+//                 ),
+//               ),
+//               const SizedBox(height: 16),
 
-              const SizedBox(height: 24),
+//               // Category
+//               DropdownButtonFormField<String>(
+//                 value: selectedCategory,
+//                 items: categories
+//                     .map(
+//                       (cat) => DropdownMenuItem(value: cat, child: Text(cat)),
+//                     )
+//                     .toList(),
+//                 onChanged: (val) => setState(() => selectedCategory = val),
+//                 decoration: const InputDecoration(
+//                   labelText: "Category",
+//                   border: OutlineInputBorder(),
+//                 ),
+//               ),
+//               const SizedBox(height: 16),
 
-              // Continue button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    "Continue",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,color: Colors.white),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+//               // Description
+//               TextField(
+//                 controller: _descriptionController,
+//                 decoration: const InputDecoration(
+//                   labelText: "Description",
+//                   border: OutlineInputBorder(),
+//                 ),
+//               ),
+//               const SizedBox(height: 16),
+
+//               // Date & Time Picker
+//               ListTile(
+//                 shape: RoundedRectangleBorder(
+//                   borderRadius: BorderRadius.circular(8),
+//                   side: const BorderSide(color: Colors.grey),
+//                 ),
+//                 title: const Text("Date & Time"),
+//                 subtitle: Text(
+//                   DateFormat("dd MMM yyyy, hh:mm a").format(selectedDate),
+//                 ),
+//                 trailing: const Icon(Icons.calendar_today, color: Colors.black),
+//                 onTap: _pickDateTime,
+//               ),
+//               const SizedBox(height: 16),
+
+//               // Attachment
+//               ListTile(
+//                 shape: RoundedRectangleBorder(
+//                   borderRadius: BorderRadius.circular(8),
+//                   side: const BorderSide(color: Colors.grey),
+//                 ),
+//                 title: const Text("Add Attachment"),
+//                 subtitle: attachment != null
+//                     ? Text(attachment!.path.split('/').last)
+//                     : const Text("No file selected"),
+//                 trailing: const Icon(Icons.attach_file, color: Colors.black),
+//                 onTap: _pickAttachment,
+//               ),
+//               if (attachment != null) ...[
+//                 const SizedBox(height: 8),
+//                 ClipRRect(
+//                   borderRadius: BorderRadius.circular(8),
+//                   child: Image.file(
+//                     attachment!,
+//                     height: 120,
+//                     fit: BoxFit.cover,
+//                   ),
+//                 ),
+//               ],
+
+//               const SizedBox(height: 24),
+
+//               // Continue button
+//               SizedBox(
+//                 width: double.infinity,
+//                 child: ElevatedButton(
+//                   onPressed: _submit,
+//                   style: ElevatedButton.styleFrom(
+//                     backgroundColor: Colors.blueAccent,
+//                     padding: const EdgeInsets.symmetric(vertical: 14),
+//                     shape: RoundedRectangleBorder(
+//                       borderRadius: BorderRadius.circular(12),
+//                     ),
+//                   ),
+//                   child: const Text(
+//                     "Continue",
+//                     style: TextStyle(
+//                       fontSize: 16,
+//                       fontWeight: FontWeight.bold,
+//                       color: Colors.white,
+//                     ),
+//                   ),
+//                 ),
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
