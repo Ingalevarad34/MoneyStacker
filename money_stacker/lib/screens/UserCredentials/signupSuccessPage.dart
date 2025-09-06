@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/state_manager.dart';
 import 'package:lottie/lottie.dart';
+import 'package:money_stacker/screens/UserCredentials/login_screen.dart';
 
 class SignupSuccessPage extends StatefulWidget {
   @override
@@ -18,7 +21,7 @@ class _SignupSuccessPageState extends State<SignupSuccessPage>
           children: [
             // Lottie Animation
             Lottie.asset(
-              'assets/success.json',
+              'assets/payment/success.json',
               repeat: false,
               width: 200,
               height: 200,
@@ -41,19 +44,22 @@ class _SignupSuccessPageState extends State<SignupSuccessPage>
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green[700],
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
               onPressed: () {
-                Navigator.pop(context); // Go back or navigate to home
+                Get.to(() => LoginScreen());
               },
               child: const Text(
                 "Continue",
                 style: TextStyle(fontSize: 18, color: Colors.white),
               ),
-            )
+            ),
           ],
         ),
       ),
